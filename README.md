@@ -45,6 +45,8 @@ or <a href="http://localhost:5000/product">locahost:5000/product</a>
 
 Todos : 
 
-- [] Supports models relationships 
-- [] generate HTML views with basics / WTForms
-- [] Custom data validations
+- [ ] Support models relationships
+- [ ] Support ORM other than SQLAlchemy 
+- [ ] Generate HTML views with basics forms 
+- [ ] Custom data validations
+- [ ] Choose which CRUD operations for which model
