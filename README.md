@@ -1,6 +1,6 @@
 ## Flask Crud Generator
 
-Allow you to generate CRUD route based on your models in a Flask application
+Allow you to generate CRUD routes based on your models in a Flask application
 
 ```py 
 from flask import Flask
@@ -40,4 +40,4 @@ if __name__ == '__main__':
 ```
 
 Then go to <a href="http://localhost:5000/user">locahost:5000/user</a>
-Then go to <a href="http://localhost:5000/product">locahost:5000/product</a>
+or <a href="http://localhost:5000/product">locahost:5000/product</a>
