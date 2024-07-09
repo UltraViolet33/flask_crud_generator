@@ -41,3 +41,10 @@ if __name__ == '__main__':
 
 Then go to <a href="http://localhost:5000/user">locahost:5000/user</a>
 or <a href="http://localhost:5000/product">locahost:5000/product</a>
+
+
+Todos : 
+
+- [] Supports models relationships 
+- [] generate HTML views with basics / WTForms
+- [] Custom data validations
