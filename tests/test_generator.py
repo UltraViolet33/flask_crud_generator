@@ -6,6 +6,13 @@ def test_app_runs(test_client):
     res = test_client.get("/")
     assert res.status_code == 404
 
+def test_pass_blueprint_get(init_database, test_client):
+    res = test_client.get("/categories/")
+    assert res.status_code == 200
+
+def test_pass_blueprint_post(init_database, test_client):
+    res = test_client.post("/categories/", json={"id": 12, "name": "cat 1"})
+    assert res.status_code == 201
 
 def test_create_user(init_database, test_client):
     res = test_client.post("/user/", json={"name": "John Doe", "email": "john@example.com"})
