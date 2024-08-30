@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ model_name }} List</title>
+</head>
+<body>
+    <h1>{{ model_name }} List</h1>
+    <a href="{{ url_for(model_name.lower() + '.create_item') }}">Create New {{ model_name }}</a>
+    <ul>
+        {% for item in items %}
+            <li>
+                <a href="{{ url_for(model_name.lower() + '.get_item', item_id=item.id) }}">{{ item.name }}</a>
+                <a href="{{ url_for(model_name.lower() + '.edit_item', item_id=item.id) }}">Edit</a>
+                <form action="{{ url_for(model_name.lower() + '.delete_item', item_id=item.id) }}" method="POST" style="display:inline;">
+                    <button type="submit">Delete</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
