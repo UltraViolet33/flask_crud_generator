@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 
 
 class CRUDGenerator:
@@ -15,7 +15,7 @@ class CRUDGenerator:
             app.extensions = {}
         app.extensions["crud_generator"] = self
 
-    def generate_routes(self, model, blueprint=None, blueprint_name=None):
+    def generate_web_routes(self, model, blueprint=None, blueprint_name=None):
         model_name = model.__name__.lower()
 
         if blueprint_name is None:
@@ -25,25 +25,40 @@ class CRUDGenerator:
             blueprint = Blueprint(model_name, __name__)
 
         @blueprint.route("/", methods=["GET"])
-        def list_items():
+        def list_items_web():
+            items = model.query.all()
+            return render_template('index.html', items=items, model_name=model_name.capitalize())
+        
+
+    def generate_api_routes(self, model, blueprint=None, blueprint_name=None):
+        model_name = model.__name__.lower()
+
+        if blueprint_name is None:
+            blueprint_name = model_name
+
+        if blueprint is None:
+            blueprint = Blueprint(model_name, __name__)
+
+        @blueprint.route("/api/", methods=["GET"])
+        def list_items_api():
             items = model.query.all()
             return jsonify([item.to_dict() for item in items])
 
-        @blueprint.route("/<int:item_id>", methods=["GET"])
-        def get_item(item_id):
+        @blueprint.route("/api/<int:item_id>", methods=["GET"])
+        def get_item_api(item_id):
             item = model.query.get_or_404(item_id)
             return jsonify(item.to_dict())
 
-        @blueprint.route("/", methods=["POST"])
-        def create_item():
+        @blueprint.route("/api/", methods=["POST"])
+        def create_item_api():
             data = request.get_json()
             item = model(**data)
             self.db.session.add(item)
             self.db.session.commit()
             return jsonify(item.to_dict()), 201
 
-        @blueprint.route("/<int:item_id>", methods=["PUT"])
-        def update_item(item_id):
+        @blueprint.route("/api/<int:item_id>", methods=["PUT"])
+        def update_item_api(item_id):
             data = request.get_json()
             item = model.query.get_or_404(item_id)
             for key, value in data.items():
@@ -51,8 +66,8 @@ class CRUDGenerator:
             self.db.session.commit()
             return jsonify(item.to_dict())
 
-        @blueprint.route("/<int:item_id>", methods=["DELETE"])
-        def delete_item(item_id):
+        @blueprint.route("/api/<int:item_id>", methods=["DELETE"])
+        def delete_item_api(item_id):
             item = model.query.get_or_404(item_id)
             self.db.session.delete(item)
             self.db.session.commit()

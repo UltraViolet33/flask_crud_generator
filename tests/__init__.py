@@ -20,11 +20,15 @@ def create_app(m=None, conf=None):
         db.init_app(_app)
         db.create_all()
         crud = CRUDGenerator(_app, db)
-        crud.generate_routes(User)
-        crud.generate_routes(Product)
+        
+        crud.generate_api_routes(User)
+        
+        crud.generate_web_routes(Product)
 
         categories = Blueprint("categories", __name__)
-        crud.generate_routes(Category, blueprint=categories, blueprint_name='categories')
+        # crud.generate_web_routes(Category, blueprint=categories, blueprint_name='categories')
+        crud.generate_api_routes(Category, blueprint=categories, blueprint_name='categories')
+
 
     _app.testing = True
     return _app
