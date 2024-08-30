@@ -12,6 +12,11 @@ Allow you to generate CRUD routes based on your models in a Flask application.
    :maxdepth: 2
    :caption: Contents:
 
+Installation
+-------
+.. code-block:: bash
+pip install flask-crud-generator
+
 Example
 -------
 
@@ -44,7 +49,9 @@ Example
             return {'id': self.id, 'name': self.name}
 
     crud.generate_routes(User)
-    crud.generate_routes(Product)
+    products = Blueprint("products", __name__)
+    # you can also pass a blueprint to a crud generator
+    crud.generate_routes(Product, products, 'products')
 
     with app.app_context():
         db.create_all()
