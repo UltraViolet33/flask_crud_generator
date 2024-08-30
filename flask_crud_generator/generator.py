@@ -1,5 +1,6 @@
-from flask import Blueprint, request, jsonify, render_template
-
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for
+import shutil
+import os
 
 class CRUDGenerator:
     def __init__(self, app=None, db=None):
@@ -16,6 +17,7 @@ class CRUDGenerator:
         app.extensions["crud_generator"] = self
 
     def generate_web_routes(self, model, blueprint=None, blueprint_name=None):
+        self.copy_templates_to_app()
         model_name = model.__name__.lower()
 
         if blueprint_name is None:
@@ -29,6 +31,30 @@ class CRUDGenerator:
             items = model.query.all()
             return render_template('index.html', items=items, model_name=model_name.capitalize())
         
+        @blueprint.route("/create/", methods=["GET", "POST"])
+        def create_item_web():
+            if request.method == 'POST':
+                form_data = request.form.to_dict()
+                model_columns = {column.name for column in model.__table__.columns}
+                filtered_data = {key: form_data[key] for key in model_columns if key in form_data}
+                try:
+                    item = model(**filtered_data)                    
+                    self.db.session.add(item)
+                    self.db.session.commit()
+                    return redirect(url_for(f"{blueprint_name}.list_items_web"))
+                except Exception as e:
+                    self.db.session.rollback()
+                    return render_template('create.html',  columns=model.__table__.columns)
+            return render_template('create.html',  columns=model.__table__.columns)
+            
+        @blueprint.route("/<int:item_id>", methods=["GET"])
+        def get_item_web(item_id):
+            item = model.query.get_or_404(item_id)
+            return render_template('details.html', item=item, model_name=model_name.capitalize())
+
+        if blueprint_name not in self.app.blueprints:
+            self.app.register_blueprint(blueprint, url_prefix=f"/{blueprint_name}")
+
 
     def generate_api_routes(self, model, blueprint=None, blueprint_name=None):
         model_name = model.__name__.lower()
@@ -74,3 +100,18 @@ class CRUDGenerator:
             return "", 204
 
         self.app.register_blueprint(blueprint, url_prefix=f"/{blueprint_name}")
+
+
+    def copy_templates_to_app(self):
+        package_templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
+        app_templates_dir = os.path.join(self.app.root_path, 'templates')
+
+        if not os.path.exists(app_templates_dir):
+            os.makedirs(app_templates_dir)
+
+        for filename in os.listdir(package_templates_dir):
+            source_file = os.path.join(package_templates_dir, filename)
+            destination_file = os.path.join(app_templates_dir, filename)
+            
+            if os.path.isfile(source_file):
+                shutil.copy(source_file, destination_file)

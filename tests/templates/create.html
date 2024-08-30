@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create {{ model_name }} </title>
+</head>
+<body>
+    <h1>Create {{ model_name }}</h1>
+    <form method="POST" action="">
+        {% for column in columns %}
+            {% if column.name != 'id' %}
+            <div>
+                <label for="{{ column.name }}">{{ column.name.capitalize() }}</label>
+                <input type="{% if column.type.python_type == int %}number{% elif column.type.python_type == str %}text{% elif column.type.python_type == bool %}checkbox{% else %}text{% endif %}" 
+                       name="{{ column.name }}" 
+                       id="{{ column.name }}"
+                       {% if column.nullable == False %}required{% endif %}>
+            </div>
+            {% endif %}
+        {% endfor %}
+        <button type="submit">Create {{ model_name }}</button>
+    </form>
+</body>
+</html>
