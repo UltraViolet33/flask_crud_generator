@@ -30,7 +30,9 @@ class Product(db.Model):
         return {'id': self.id, 'name': self.name}
 
 crud.generate_routes(User)
-crud.generate_routes(Product)
+products = Blueprint("products", __name__)
+# you can also pass a blueprint to a crud generator
+crud.generate_routes(Product, products, 'products')
 
 with app.app_context():
     db.create_all()
@@ -40,7 +42,7 @@ if __name__ == '__main__':
 ```
 
 Then go to <a href="http://localhost:5000/user">locahost:5000/user</a>
-or <a href="http://localhost:5000/product">locahost:5000/product</a>
+or <a href="http://localhost:5000/products">locahost:5000/product</a>
 
 
 Todos : 
