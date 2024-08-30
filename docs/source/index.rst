@@ -15,6 +15,7 @@ Allow you to generate CRUD routes based on your models in a Flask application.
 Installation
 -------
 .. code-block:: bash
+
    pip install flask-crud-generator
 
 Example
