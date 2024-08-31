@@ -8,15 +8,36 @@
     <form method="POST" action="">
         {% for column in columns %}
             {% if column.name != 'id' %}
-            <div>
-                <label for="{{ column.name }}">{{ column.name.capitalize() }}</label>
-                <input type="{% if column.type.python_type == int %}number{% elif column.type.python_type == str %}text{% elif column.type.python_type == bool %}checkbox{% else %}text{% endif %}" 
-                       name="{{ column.name }}" 
-                       id="{{ column.name }}"
-                       {% if column.nullable == False %}required{% endif %}>
-            </div>
+                {% if column.name in related_data %} 
+                <div>
+                    <label for="">{{ column.name.capitalize() }}</label>
+                    <select name="{{column.name}}" id="">
+                        {% for data in related_data[column.name] %}
+                            <option value="{{data.id}}">{{data.text}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% else %}
+                    <div>
+                        <label for="{{ column.name }}">{{ column.name.capitalize() }}</label>
+                        <input type="{% if column.type.python_type == int %}number{% elif column.type.python_type == str %}text{% elif column.type.python_type == bool %}checkbox{% else %}text{% endif %}" 
+                            name="{{ column.name }}" 
+                            id="{{ column.name }}"
+                            {% if column.nullable == False %}required{% endif %}>
+                    </div>
+                    {% endif %}
             {% endif %}
         {% endfor %}
+         <!-- Gestion des relations many-to-many -->
+    {% for relationship in relationships %}
+        <label>{{ relationship.key.capitalize() }}</label>
+        <select name="{{ relationship.key }}" multiple>
+            {% for item in related_data[relationship.key] %}
+                <option value="{{ item.id }}">{{ item.name }}</option>
+            {% endfor %}
+        </select>
+    {% endfor %}
+
         <button type="submit">Create {{ model_name }}</button>
     </form>
 </body>

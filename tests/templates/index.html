@@ -7,9 +7,10 @@
     <h1>{{ model_name }} List</h1>
     <ul>
         {% for item in items %}
+            <a href="{{url_for(details_url, item_id=item.id)}}">details</a>
             {% for key, value in item.to_dict().items() %}
             <li>
-                <p>{{ key.capitalize() }} : {{value}}</p>
+                <p>{{value}}</p>
             </li>
             {% endfor %}
         {% endfor %}

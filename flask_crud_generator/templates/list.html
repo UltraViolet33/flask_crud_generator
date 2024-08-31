@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ model_name }} List</title>
+  </head>
+  <body>
+    <h1>{{ model_name }} List</h1>
+    <ul>
+      {% for item in items %}
+        <li>
+          <a href="{{ url_for(details_url, item_id=item.id) }}">{{ model_name }} - {{ item.id }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

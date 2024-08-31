@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for
+from sqlalchemy.orm import class_mapper
 import shutil
 import os
 
@@ -17,6 +18,20 @@ class CRUDGenerator:
         app.extensions["crud_generator"] = self
 
     def generate_web_routes(self, model, blueprint=None, blueprint_name=None):
+
+        def to_dict(instance):
+            columns = [c.key for c in class_mapper(instance.__class__).columns]
+            relationships = [r.key for r in class_mapper(instance.__class__).relationships]
+            result = {c: getattr(instance, c) for c in columns}
+            for r in relationships:
+                related_obj = getattr(instance, r)
+                if related_obj:
+                    if isinstance(related_obj, list):
+                        result[r] = [to_dict(item) for item in related_obj]
+                    else:
+                        result[r] = to_dict(related_obj)
+            return result
+    
         self.copy_templates_to_app()
         model_name = model.__name__.lower()
 
@@ -29,23 +44,63 @@ class CRUDGenerator:
         @blueprint.route("/", methods=["GET"])
         def list_items_web():
             items = model.query.all()
-            return render_template('index.html', items=items, model_name=model_name.capitalize())
+            details_url = f"{blueprint_name}.get_item_web"
+            return render_template('list.html', items=items, model_name=model_name.capitalize(), details_url=details_url)
         
         @blueprint.route("/create/", methods=["GET", "POST"])
         def create_item_web():
+            model_class = globals().get(model)
+            model_class = model
+
+            related_data = {}
+            relationships = []
+
+            # Parcourir les relations du modèle
+            for relationship in model_class.__mapper__.relationships:
+                if relationship.secondary is not None:  # C'est une relation many-to-many
+                    related_model_class = relationship.mapper.class_
+                    related_data[relationship.key] = related_model_class.query.all()
+                    relationships.append(relationship)
+
+            for column in model_class.__table__.columns:
+                print(column)
+                if column.foreign_keys:
+                    
+                    for relationship in model_class.__mapper__.relationships:
+                        if relationship.local_remote_pairs[0][0].name == column.name:
+                            related_model_class = relationship.mapper.class_
+                            related_data[column.name] = related_model_class.query.all()
+                            break
+            print(related_data)
+
             if request.method == 'POST':
                 form_data = request.form.to_dict()
                 model_columns = {column.name for column in model.__table__.columns}
                 filtered_data = {key: form_data[key] for key in model_columns if key in form_data}
+                print(filtered_data)
                 try:
                     item = model(**filtered_data)                    
                     self.db.session.add(item)
+                     # Traiter les relations many-to-many
+                    for relationship in model.__mapper__.relationships:
+                        if relationship.secondary is not None:  # C'est une relation many-to-many
+                            related_ids = request.form.getlist(relationship.key)
+                            if related_ids:
+                                related_items = relationship.mapper.class_.query.filter(
+                                    relationship.mapper.class_.id.in_(related_ids)
+                                ).all()
+                                print(related_items)
+                                getattr(item, relationship.key).extend(related_items)
+
+                    # Commit les changements dans la base de données
                     self.db.session.commit()
                     return redirect(url_for(f"{blueprint_name}.list_items_web"))
                 except Exception as e:
                     self.db.session.rollback()
-                    return render_template('create.html',  columns=model.__table__.columns)
-            return render_template('create.html',  columns=model.__table__.columns)
+                    print(e)
+                    return render_template('create.html',  columns=model.__table__.columns), 500
+                print(column)
+            return render_template('create.html',  columns=model.__table__.columns, related_data=related_data, relationships=relationships)
             
         @blueprint.route("/<int:item_id>", methods=["GET"])
         def get_item_web(item_id):
