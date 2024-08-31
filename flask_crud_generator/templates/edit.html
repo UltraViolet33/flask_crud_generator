@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Create {{ model_name }} </title>
+    <title>Edit {{ model_name }} - {{item.id}} </title>
 </head>
 <body>
-    <h1>Create {{ model_name }}</h1>
+    <h1>Edit {{ model_name }} - {{item.id}}</h1>
     <form method="POST" action="">
         {% for column in columns %}
             {% if column.name != 'id' %}
@@ -13,7 +13,7 @@
                     <label for="">{{ column.name.capitalize() }}</label>
                     <select name="{{column.name}}" id="">
                         {% for data in related_data[column.name] %}
-                            <option value="{{data.id}}">{{data.name}}</option>
+                            <option value="{{data.id}}" {% if data.id == item[column.name]%}selected{% endif %}>{{data.name}}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -23,7 +23,9 @@
                         <input type="{% if column.type.python_type == int %}number{% elif column.type.python_type == str %}text{% elif column.type.python_type == bool %}checkbox{% else %}text{% endif %}" 
                             name="{{ column.name }}" 
                             id="{{ column.name }}"
-                            {% if column.nullable == False %}required{% endif %}>
+                            {% if column.nullable == False %}required{% endif %}
+                            value="{{item[column.name]}}"
+                            >
                     </div>
                     {% endif %}
             {% endif %}
@@ -32,8 +34,8 @@
     {% for relationship in relationships %}
         <label>{{ relationship.key.capitalize() }}</label>
         <select name="{{ relationship.key }}" multiple>
-            {% for item in related_data[relationship.key] %}
-                <option value="{{ item.id }}">{{ item.name }}</option>
+            {% for item1 in related_data[relationship.key] %}
+                <option value="{{ item1.id }}" {% if item1.id in item[relationship.key]%}selected{% endif %}>{{ item1.name }}</option>
             {% endfor %}
         </select>
     {% endfor %}

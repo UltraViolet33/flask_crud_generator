@@ -47,37 +47,55 @@ class CRUDGenerator:
             details_url = f"{blueprint_name}.get_item_web"
             return render_template('list.html', items=items, model_name=model_name.capitalize(), details_url=details_url)
         
+        @blueprint.route("/edit/<int:item_id>", methods=["GET", "POST"])
+        def edit_item_web(item_id):
+            model_class = globals().get(model)
+            model_class = model
+
+            item = model.query.get_or_404(item_id)
+
+            relationships, related_data = self.get_related_data(model_class)
+
+            if request.method == 'POST':
+                 # Get the form data (use request.json for JSON data)
+                form_data = request.form.to_dict()  # or request.get_json() for API routes
+
+                # Get model columns
+                model_columns = {column.name for column in model.__table__.columns}
+                
+                # Update the item's attributes with the new values from form_data
+                for key, value in form_data.items():
+                    if key in model_columns:
+                        setattr(item, key, value)
+
+                # Handle many-to-many relationships if any
+                for relationship in model.__mapper__.relationships:
+                    if relationship.secondary is not None:  # It's a many-to-many relationship
+                        related_ids = request.form.getlist(relationship.key)
+                        if related_ids:
+                            related_items = relationship.mapper.class_.query.filter(
+                                relationship.mapper.class_.id.in_(related_ids)
+                            ).all()
+                            setattr(item, relationship.key, related_items)
+
+                # Commit the changes to the database
+                self.db.session.commit()
+                return redirect(url_for(f"{blueprint_name}.get_item_web",item_id=item_id))
+
+            return render_template('edit.html', item=item.to_dict(), columns=model.__table__.columns, related_data=related_data, relationships=relationships)     
+
         @blueprint.route("/create/", methods=["GET", "POST"])
         def create_item_web():
             model_class = globals().get(model)
             model_class = model
 
-            related_data = {}
-            relationships = []
-
-            # Parcourir les relations du modèle
-            for relationship in model_class.__mapper__.relationships:
-                if relationship.secondary is not None:  # C'est une relation many-to-many
-                    related_model_class = relationship.mapper.class_
-                    related_data[relationship.key] = related_model_class.query.all()
-                    relationships.append(relationship)
-
-            for column in model_class.__table__.columns:
-                print(column)
-                if column.foreign_keys:
-                    
-                    for relationship in model_class.__mapper__.relationships:
-                        if relationship.local_remote_pairs[0][0].name == column.name:
-                            related_model_class = relationship.mapper.class_
-                            related_data[column.name] = related_model_class.query.all()
-                            break
+            relationships, related_data = self.get_related_data(model_class)
             print(related_data)
 
             if request.method == 'POST':
                 form_data = request.form.to_dict()
                 model_columns = {column.name for column in model.__table__.columns}
                 filtered_data = {key: form_data[key] for key in model_columns if key in form_data}
-                print(filtered_data)
                 try:
                     item = model(**filtered_data)                    
                     self.db.session.add(item)
@@ -99,7 +117,7 @@ class CRUDGenerator:
                     self.db.session.rollback()
                     print(e)
                     return render_template('create.html',  columns=model.__table__.columns), 500
-                print(column)
+            print(relationships)
             return render_template('create.html',  columns=model.__table__.columns, related_data=related_data, relationships=relationships)
             
         @blueprint.route("/<int:item_id>", methods=["GET"])
@@ -156,6 +174,26 @@ class CRUDGenerator:
 
         self.app.register_blueprint(blueprint, url_prefix=f"/{blueprint_name}")
 
+
+    def get_related_data(self, model_class):
+        related_data = {}
+        relationships = []
+
+        for relationship in model_class.__mapper__.relationships:
+            print(relationship)
+            if relationship.secondary is not None:  # many to many relation
+                related_model_class = relationship.mapper.class_
+                related_data[relationship.key] = related_model_class.query.all()
+                relationships.append(relationship)
+
+            for column in model_class.__table__.columns:
+                if column.foreign_keys:                    
+                    for relationship in model_class.__mapper__.relationships:
+                        if relationship.local_remote_pairs[0][0].name == column.name:
+                            related_model_class = relationship.mapper.class_
+                            related_data[column.name] = related_model_class.query.all()
+                            break
+        return [relationships, related_data]
 
     def copy_templates_to_app(self):
         package_templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
