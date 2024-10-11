@@ -1,4 +1,7 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for
+from sqlalchemy.orm import class_mapper
+import shutil
+import os
 
 
 class CRUDGenerator:
@@ -15,7 +18,8 @@ class CRUDGenerator:
             app.extensions = {}
         app.extensions["crud_generator"] = self
 
-    def generate_routes(self, model, blueprint=None, blueprint_name=None):
+    def generate_web_routes(self, model, blueprint=None, blueprint_name=None):
+        self.copy_templates_to_app()
         model_name = model.__name__.lower()
 
         if blueprint_name is None:
@@ -23,6 +27,24 @@ class CRUDGenerator:
 
         if blueprint is None:
             blueprint = Blueprint(model_name, __name__)
+
+        @blueprint.route("/", methods=["GET"])
+        def list_items_web():
+            items = model.query.all()
+            # details_url = f"{blueprint_name}.get_item_web"
+            details_url = ""
+            return render_template('list.html', items=items, model_name=model_name.capitalize(), details_url=details_url)
+        
+        self.app.register_blueprint(blueprint, url_prefix=f"/{blueprint_name}")
+
+    def generate_routes(self, model, blueprint=None, blueprint_name=None):
+        model_name = model.__name__.lower()
+
+        if blueprint_name is None:
+            blueprint_name = f"api_{model_name}"
+
+        if blueprint is None:
+            blueprint = Blueprint(blueprint_name, __name__)
 
         @blueprint.route("/", methods=["GET"])
         def list_items():
@@ -58,4 +80,18 @@ class CRUDGenerator:
             self.db.session.commit()
             return "", 204
 
-        self.app.register_blueprint(blueprint, url_prefix=f"/{blueprint_name}")
+        self.app.register_blueprint(blueprint, url_prefix=f"/api/{model_name}")
+
+    def copy_templates_to_app(self):
+        package_templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
+        app_templates_dir = os.path.join(self.app.root_path, 'templates')
+
+        if not os.path.exists(app_templates_dir):
+            os.makedirs(app_templates_dir)
+
+        for filename in os.listdir(package_templates_dir):
+            source_file = os.path.join(package_templates_dir, filename)
+            destination_file = os.path.join(app_templates_dir, filename)
+            
+            if os.path.isfile(source_file):
+                shutil.copy(source_file, destination_file)
