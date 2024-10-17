@@ -35,6 +35,24 @@ class CRUDGenerator:
             details_url = ""
             return render_template('list.html', items=items, model_name=model_name.capitalize(), details_url=details_url)
         
+
+        @blueprint.route("/create/", methods=["GET", "POST"])
+        def create_item_web():
+            if request.method == 'POST':
+                form_data = request.form.to_dict()
+                model_columns = {column.name for column in model.__table__.columns}
+                filtered_data = {key: form_data[key] for key in model_columns if key in form_data}
+                try:
+                    item = model(**filtered_data)                    
+                    self.db.session.add(item)
+                    self.db.session.commit()
+                    return redirect(url_for(f"{blueprint_name}.list_items_web"))
+                except Exception as e:
+                    self.db.session.rollback()
+                    return render_template('create.html',  columns=model.__table__.columns)
+            return render_template('create.html',  columns=model.__table__.columns)
+            
+        
         self.app.register_blueprint(blueprint, url_prefix=f"/{blueprint_name}")
 
     def generate_routes(self, model, blueprint=None, blueprint_name=None):
