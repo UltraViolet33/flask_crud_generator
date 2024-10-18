@@ -17,7 +17,7 @@ class CRUDGenerator:
             app.extensions = {}
         app.extensions["crud_generator"] = self
 
-    def generate_web_routes(self, model, blueprint=None, blueprint_name=None, form_class=None, populate_choices_func=None):
+    def generate_web_routes(self, model, blueprint=None, blueprint_name=None, form_class=None, create_edit_form=None):
         self.copy_templates_to_app()
         model_name = model.__name__.lower()
 
@@ -43,28 +43,28 @@ class CRUDGenerator:
         def create_item_web():
             if form_class is not None:
                 form = form_class()
-                if populate_choices_func:
-                    populate_choices_func(form)
+                # if populate_choices_func:
+                #     populate_choices_func(form)
 
                 if form.validate_on_submit():
                     data = form.data
+                    print(data)
                     relations = []
-                    for relationship in model.__mapper__.relationships:
-                        field_name = relationship.key
-                        relationship_data = form[field_name].data if field_name in form else None
-                        if relationship_data is not None:
-                            if relationship.uselist:
-                                related_model = relationship.mapper.class_
-                                related_items = related_model.query.filter(related_model.id.in_(relationship_data)).all()
-                                relations.append({"field_name": field_name, "related_items": related_items})
-                                del data[field_name]
-
+                    # for relationship in model.__mapper__.relationships:
+                    #     field_name = relationship.key
+                    #     relationship_data = form[field_name].data if field_name in form else None
+                    #     if relationship_data is not None:
+                    #         if relationship.uselist:
+                    #             related_model = relationship.mapper.class_
+                    #             related_items = related_model.query.filter(related_model.id.in_(relationship_data)).all()
+                    #             relations.append((field_name, related_items))
+                    #             del data[field_name]
 
                     del data['csrf_token']
                     item = model(**data)
                     for field_name, related_items in relations:
                         setattr(item, field_name, related_items)
-
+                    
                     self.db.session.add(item)
                     self.db.session.commit()
                     # flash(f'{model_name.capitalize()} created successfully!', 'success')
@@ -90,14 +90,51 @@ class CRUDGenerator:
         def edit_item_web(item_id):
             item = model.query.get_or_404(item_id)
             if form_class is not None:
-                form = form_class(obj=item)
-                if populate_choices_func:
-                    populate_choices_func(form)
+                # form = form_class(obj=item)
+                form = create_edit_form(item)
+
+                # if item and hasattr(item, 'product_list'):
+                #     preselected_values = [(value.id, value.name) for value in item.product_list]  # Adjust as needed
+                #     print(preselected_values)
+                #     form.product_list.default = preselected_values
+                #     print(form.product_list.default)
+                #     form.product_list.process()
+
+                # form.product_list.choices = [('1', 'abc'), ('2', 'def')]
+                # form.product_list.default = ['1', '2']
+                # form.product_list.process(request.form)
+                
+                # if populate_choices_func:
+                #     populate_choices_func(form)
+                # form.process()
+                
+                
+                # form.process(None, None, item.to_dict())
+
+                if request.method == 'POST' and form.validate_on_submit():
+                    print("POST")
+                    print(form.data)
+                    print(form.errors)
+
+                # form = form_class(obj=item)
+           
                 if form.validate_on_submit():
+                    print("valida")
                     data = form.data
+                    relations = []
+                    for relationship in model.__mapper__.relationships:
+                        field_name = relationship.key
+                        relationship_data = form[field_name].data if field_name in form else None
+                        if relationship_data is not None:
+                            if relationship.uselist:
+                                related_model = relationship.mapper.class_
+                                related_items = related_model.query.filter(related_model.id.in_(relationship_data)).all()
+                                relations.append((field_name, related_items))
+                                del data[field_name]
                     del data['csrf_token']
-                    for key, value in data.items():
-                        setattr(item, key, value)
+                    for field_name, related_items in relations:
+                        print(field_name, related_items)
+                        setattr(item, field_name, related_items)
                     self.db.session.commit()
                     # flash(f'{model_name.capitalize()} updated successfully!', 'success')
                     return redirect(url_for(f'{model_name}.list_items_web'))
