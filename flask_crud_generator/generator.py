@@ -31,9 +31,13 @@ class CRUDGenerator:
         @blueprint.route("/", methods=["GET"])
         def list_items_web():
             items = model.query.all()
-            # details_url = f"{blueprint_name}.get_item_web"
-            details_url = ""
+            details_url = f"{blueprint_name}.get_item_web"
             return render_template('list.html', items=items, model_name=model_name.capitalize(), details_url=details_url)
+
+        @blueprint.route("/<int:item_id>", methods=["GET"])
+        def get_item_web(item_id):
+            item = model.query.get_or_404(item_id)
+            return render_template('details.html', item=item, model_name=model_name.capitalize())
         
 
         @blueprint.route("/create/", methods=["GET", "POST"])

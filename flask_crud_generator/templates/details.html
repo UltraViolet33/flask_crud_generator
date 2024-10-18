@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ model_name }}</title>
+</head>
+<body>
+    <h1>{{ model_name }}</h1>
+    <ul>
+        {% for key, value in item.to_dict().items() %}
+        <li>{{ key.capitalize() }} : {{ value }}</td>
+        </li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
