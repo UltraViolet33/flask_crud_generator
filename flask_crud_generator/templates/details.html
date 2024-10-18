@@ -7,9 +7,9 @@
     <h1>{{ model_name }}</h1>
     <ul>
         {% for key, value in item.to_dict().items() %}
-        <li>{{ key.capitalize() }} : {{ value }}</td>
-        </li>
-    {% endfor %}
+            <li>{{ key.capitalize() }} : {{ value }}</li>
+        {% endfor %}
     </ul>
+    <a href="{{ url_for(edit_url, item_id=item.id) }}">Edit {{ model_name }}</a>
 </body>
 </html>

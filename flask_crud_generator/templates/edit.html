@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit {{ model_name }} </title>
+</head>
+<body>
+    <h1>Edit {{ model_name }}</h1>
+    <form method="POST" action="">
+        {% for column in columns %}
+            {% if column.name != 'id' %}
+                <div>
+                    <label for="{{ column.name }}">{{ column.name.capitalize() }}</label>
+                    {% if column.type.python_type.__name__ == 'int' %}
+                        {% for key, value in item.__dict__.items() %}
+                            {% if key == column.name %}  
+                                <input type="number" 
+                                    name="{{ column.name }}" 
+                                    id="{{ column.name }}"
+                                    value="{{ value }}"
+                                    {% if column.nullable == False %}required{% endif %}>
+                            {% endif %}
+                        {% endfor %}
+                    {% elif column.type.python_type.__name__ == 'str' %}
+                        {% for key, value in item.__dict__.items() %}
+                            {% if key == column.name %}  
+                                <input type="text" 
+                                name="{{ column.name }}" 
+                                id="{{ column.name }}"
+                                value="{{ value }}"
+                                {% if column.nullable == False %}required{% endif %}>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+        <button type="submit">Edit {{ model_name }}</button>
+    </form>
+</body>
+</html>

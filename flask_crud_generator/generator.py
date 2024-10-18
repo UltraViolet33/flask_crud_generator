@@ -37,9 +37,9 @@ class CRUDGenerator:
         @blueprint.route("/<int:item_id>", methods=["GET"])
         def get_item_web(item_id):
             item = model.query.get_or_404(item_id)
-            return render_template('details.html', item=item, model_name=model_name.capitalize())
+            edit_url = f"{blueprint_name}.edit_item_web"
+            return render_template('details.html', item=item, model_name=model_name.capitalize(), edit_url=edit_url)
         
-
         @blueprint.route("/create/", methods=["GET", "POST"])
         def create_item_web():
             if request.method == 'POST':
@@ -55,8 +55,23 @@ class CRUDGenerator:
                     self.db.session.rollback()
                     return render_template('create.html',  columns=model.__table__.columns)
             return render_template('create.html',  columns=model.__table__.columns)
+
+        @blueprint.route("/edit/<int:item_id>", methods=["GET", "POST"])
+        def edit_item_web(item_id):
+            item = model.query.get_or_404(item_id)
+            if request.method == 'POST':
+                form_data = request.form.to_dict()
+                model_columns = {column.name for column in model.__table__.columns}
+                try:
+                    for key, value in form_data.items():
+                        if key in model_columns:
+                            setattr(item, key, value)
+                    self.db.session.commit()
+                    return redirect(url_for(f"{blueprint_name}.list_items_web"))
+                except Exception as e:
+                    self.db.session.rollback()
+            return render_template('edit.html', columns=model.__table__.columns, item=item)
             
-        
         self.app.register_blueprint(blueprint, url_prefix=f"/{blueprint_name}")
 
     def generate_routes(self, model, blueprint=None, blueprint_name=None):
