@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for
-from sqlalchemy.orm import class_mapper
 import shutil
 import os
 
@@ -46,10 +45,26 @@ class CRUDGenerator:
                 form = form_class()
                 if populate_choices_func:
                     populate_choices_func(form)
+
                 if form.validate_on_submit():
                     data = form.data
+                    relations = []
+                    for relationship in model.__mapper__.relationships:
+                        field_name = relationship.key
+                        relationship_data = form[field_name].data if field_name in form else None
+                        if relationship_data is not None:
+                            if relationship.uselist:
+                                related_model = relationship.mapper.class_
+                                related_items = related_model.query.filter(related_model.id.in_(relationship_data)).all()
+                                relations.append({"field_name": field_name, "related_items": related_items})
+                                del data[field_name]
+
+
                     del data['csrf_token']
                     item = model(**data)
+                    for field_name, related_items in relations:
+                        setattr(item, field_name, related_items)
+
                     self.db.session.add(item)
                     self.db.session.commit()
                     # flash(f'{model_name.capitalize()} created successfully!', 'success')
