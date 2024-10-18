@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create {{ model_name }} </title>
+</head>
+<body>
+    <h1>Create {{ model_name }}</h1>
+    <form method="POST">
+        {{ form.csrf_token }}
+        {{ form.hidden_tag() }}
+        {% for field in form %}
+            {% if field.label.text != 'CSRF Token' %}
+            <div>
+                <label for="{{ field.id }}">{{ field.label.text }}</label>
+                {{ field }}
+                {% for error in field.errors %}
+                    <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endfor %}
+        <button type="submit">{{action}}</button>
+    </form>
+    
+</body>
+</html>
