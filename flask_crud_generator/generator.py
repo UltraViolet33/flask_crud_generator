@@ -24,9 +24,18 @@ class CRUDGenerator:
         blueprint_name=None,
         form_class=None,
         create_edit_form=None,
+        list_config=None,
     ):
         self.copy_templates_to_app()
         model_name = model.__name__.lower()
+        
+        if list_config is None:
+            list_config = {'keys': None, 'details_property_on': '', 'unique_identifier': ''}
+
+        if list_config['keys'] is None:
+            # add to keys every property of the model
+            list_config['keys'] = [column.name for column in model.__table__.columns]
+            
 
         if blueprint_name is None:
             blueprint_name = model_name
@@ -38,9 +47,13 @@ class CRUDGenerator:
         def list_items_web():
             items = model.query.all()
             details_url = f"{blueprint_name}.get_item_web"
+            
+            print(list_config)
             return render_template(
                 "list.html",
                 items=items,
+                keys=list_config['keys'],
+                list_config=list_config,
                 model_name=model_name.capitalize(),
                 details_url=details_url,
             )
