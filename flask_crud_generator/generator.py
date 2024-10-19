@@ -17,7 +17,14 @@ class CRUDGenerator:
             app.extensions = {}
         app.extensions["crud_generator"] = self
 
-    def generate_web_routes(self, model, blueprint=None, blueprint_name=None, form_class=None, create_edit_form=None):
+    def generate_web_routes(
+        self,
+        model,
+        blueprint=None,
+        blueprint_name=None,
+        form_class=None,
+        create_edit_form=None,
+    ):
         self.copy_templates_to_app()
         model_name = model.__name__.lower()
 
@@ -31,117 +38,89 @@ class CRUDGenerator:
         def list_items_web():
             items = model.query.all()
             details_url = f"{blueprint_name}.get_item_web"
-            return render_template('list.html', items=items, model_name=model_name.capitalize(), details_url=details_url)
+            return render_template(
+                "list.html",
+                items=items,
+                model_name=model_name.capitalize(),
+                details_url=details_url,
+            )
 
         @blueprint.route("/<int:item_id>", methods=["GET"])
         def get_item_web(item_id):
             item = model.query.get_or_404(item_id)
             edit_url = f"{blueprint_name}.edit_item_web"
-            return render_template('details.html', item=item, model_name=model_name.capitalize(), edit_url=edit_url)
-        
+            return render_template(
+                "details.html",
+                item=item,
+                model_name=model_name.capitalize(),
+                edit_url=edit_url,
+            )
+
         @blueprint.route("/create/", methods=["GET", "POST"])
         def create_item_web():
             if form_class is not None:
                 form = form_class()
-                # if populate_choices_func:
-                #     populate_choices_func(form)
 
                 if form.validate_on_submit():
                     data = form.data
-                    print(data)
-                    relations = []
-                    # for relationship in model.__mapper__.relationships:
-                    #     field_name = relationship.key
-                    #     relationship_data = form[field_name].data if field_name in form else None
-                    #     if relationship_data is not None:
-                    #         if relationship.uselist:
-                    #             related_model = relationship.mapper.class_
-                    #             related_items = related_model.query.filter(related_model.id.in_(relationship_data)).all()
-                    #             relations.append((field_name, related_items))
-                    #             del data[field_name]
-
-                    del data['csrf_token']
+                    del data["csrf_token"]
                     item = model(**data)
-                    for field_name, related_items in relations:
-                        setattr(item, field_name, related_items)
-                    
+
                     self.db.session.add(item)
                     self.db.session.commit()
                     # flash(f'{model_name.capitalize()} created successfully!', 'success')
-                    return redirect(url_for(f'{blueprint_name}.list_items_web'))
-                return render_template('wtf_create.html', form=form, model_name=model_name.capitalize(), action="Create")
+                    return redirect(url_for(f"{blueprint_name}.list_items_web"))
+                return render_template(
+                    "wtf_create.html",
+                    form=form,
+                    model_name=model_name.capitalize(),
+                    action="Create",
+                )
 
             else:
-                if request.method == 'POST':
+                if request.method == "POST":
                     form_data = request.form.to_dict()
                     model_columns = {column.name for column in model.__table__.columns}
-                    filtered_data = {key: form_data[key] for key in model_columns if key in form_data}
+                    filtered_data = {
+                        key: form_data[key] for key in model_columns if key in form_data
+                    }
                     try:
-                        item = model(**filtered_data)                    
+                        item = model(**filtered_data)
                         self.db.session.add(item)
                         self.db.session.commit()
                         return redirect(url_for(f"{blueprint_name}.list_items_web"))
                     except Exception as e:
                         self.db.session.rollback()
-                        return render_template('create.html',  columns=model.__table__.columns)
-                return render_template('create.html',  columns=model.__table__.columns)
+                        return render_template(
+                            "create.html", columns=model.__table__.columns
+                        )
+                return render_template("create.html", columns=model.__table__.columns)
 
         @blueprint.route("/edit/<int:item_id>", methods=["GET", "POST"])
         def edit_item_web(item_id):
             item = model.query.get_or_404(item_id)
             if form_class is not None:
-                # form = form_class(obj=item)
                 form = create_edit_form(item)
 
-                # if item and hasattr(item, 'product_list'):
-                #     preselected_values = [(value.id, value.name) for value in item.product_list]  # Adjust as needed
-                #     print(preselected_values)
-                #     form.product_list.default = preselected_values
-                #     print(form.product_list.default)
-                #     form.product_list.process()
-
-                # form.product_list.choices = [('1', 'abc'), ('2', 'def')]
-                # form.product_list.default = ['1', '2']
-                # form.product_list.process(request.form)
-                
-                # if populate_choices_func:
-                #     populate_choices_func(form)
-                # form.process()
-                
-                
-                # form.process(None, None, item.to_dict())
-
-                if request.method == 'POST' and form.validate_on_submit():
-                    print("POST")
-                    print(form.data)
-                    print(form.errors)
-
-                # form = form_class(obj=item)
-           
                 if form.validate_on_submit():
-                    print("valida")
                     data = form.data
-                    relations = []
-                    for relationship in model.__mapper__.relationships:
-                        field_name = relationship.key
-                        relationship_data = form[field_name].data if field_name in form else None
-                        if relationship_data is not None:
-                            if relationship.uselist:
-                                related_model = relationship.mapper.class_
-                                related_items = related_model.query.filter(related_model.id.in_(relationship_data)).all()
-                                relations.append((field_name, related_items))
-                                del data[field_name]
-                    del data['csrf_token']
-                    for field_name, related_items in relations:
-                        print(field_name, related_items)
-                        setattr(item, field_name, related_items)
+
+                    del data["csrf_token"]
+                    for key, value in data.items():
+                        setattr(item, key, value)
+
                     self.db.session.commit()
                     # flash(f'{model_name.capitalize()} updated successfully!', 'success')
-                    return redirect(url_for(f'{model_name}.list_items_web'))
-                return render_template(f'wtf_create.html', form=form, model_name=model_name.capitalize(), action='Edit')
+                    return redirect(url_for(f"{model_name}.list_items_web"))
+                return render_template(
+                    f"wtf_create.html",
+                    form=form,
+                    model_name=model_name.capitalize(),
+                    action="Edit",
+                )
             else:
 
-                if request.method == 'POST':
+                if request.method == "POST":
                     form_data = request.form.to_dict()
                     model_columns = {column.name for column in model.__table__.columns}
                     try:
@@ -152,8 +131,10 @@ class CRUDGenerator:
                         return redirect(url_for(f"{blueprint_name}.list_items_web"))
                     except Exception as e:
                         self.db.session.rollback()
-                return render_template('edit.html', columns=model.__table__.columns, item=item)
-            
+                return render_template(
+                    "edit.html", columns=model.__table__.columns, item=item
+                )
+
         self.app.register_blueprint(blueprint, url_prefix=f"/{blueprint_name}")
 
     def generate_routes(self, model, blueprint=None, blueprint_name=None):
@@ -202,16 +183,16 @@ class CRUDGenerator:
         self.app.register_blueprint(blueprint, url_prefix=f"/api/{model_name}")
 
     def copy_templates_to_app(self):
-        package_templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
-        app_templates_dir = os.path.join(self.app.root_path, 'templates')
+        package_templates_dir = os.path.join(os.path.dirname(__file__), "templates")
+        app_templates_dir = os.path.join(self.app.root_path, "templates")
 
         if not os.path.exists(app_templates_dir):
             os.makedirs(app_templates_dir)
 
         for filename in os.listdir(package_templates_dir):
-            # copy the files and directories 
+            # copy the files and directories
             source_file = os.path.join(package_templates_dir, filename)
             destination_file = os.path.join(app_templates_dir, filename)
-            
+
             if os.path.isfile(source_file):
                 shutil.copy(source_file, destination_file)
