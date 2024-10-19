@@ -1,0 +1,17 @@
+<html>
+  <head>
+    {% block title %}
+
+    {% endblock %}
+  </head>
+  <body>
+    <nav>
+      {% for nav in nav_links %}
+        <a href=" {{ url_for(nav.url) }}">{{ nav.name }}</a>
+      {% endfor %}
+    </nav>
+    {% block content %}
+
+    {% endblock %}
+  </body>
+</html>

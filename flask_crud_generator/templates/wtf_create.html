@@ -1,9 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create {{ model_name }} </title>
-</head>
-<body>
+{% extends 'base.html' %} {% block title %}
+  {{model_name}} List
+{% endblock %} {% block content %}
     <h1>Create {{ model_name }}</h1>
     <form method="POST">
         {{ form.csrf_token }}
@@ -21,6 +18,4 @@
         {% endfor %}
         <button type="submit">{{action}}</button>
     </form>
-    
-</body>
-</html>
+{% endblock %}

@@ -28,14 +28,17 @@ class CRUDGenerator:
     ):
         self.copy_templates_to_app()
         model_name = model.__name__.lower()
-        
-        if list_config is None:
-            list_config = {'keys': None, 'details_property_on': '', 'unique_identifier': ''}
 
-        if list_config['keys'] is None:
+        if list_config is None:
+            list_config = {
+                "keys": None,
+                "details_property_on": "",
+                "unique_identifier": "",
+            }
+
+        if list_config["keys"] is None:
             # add to keys every property of the model
-            list_config['keys'] = [column.name for column in model.__table__.columns]
-            
+            list_config["keys"] = [column.name for column in model.__table__.columns]
 
         if blueprint_name is None:
             blueprint_name = model_name
@@ -43,19 +46,26 @@ class CRUDGenerator:
         if blueprint is None:
             blueprint = Blueprint(model_name, __name__)
 
+
+        def get_nav_links(blueprint_name):
+            return [
+                {"name":"List", "url": f"{blueprint_name}.list_items_web"},
+                {"name":"Create", "url": f"{blueprint_name}.create_item_web"},
+            ]
+
         @blueprint.route("/", methods=["GET"])
         def list_items_web():
             items = model.query.all()
             details_url = f"{blueprint_name}.get_item_web"
-            
-            print(list_config)
+
             return render_template(
                 "list.html",
                 items=items,
-                keys=list_config['keys'],
+                keys=list_config["keys"],
                 list_config=list_config,
                 model_name=model_name.capitalize(),
                 details_url=details_url,
+                nav_links=get_nav_links(blueprint_name),
             )
 
         @blueprint.route("/<int:item_id>", methods=["GET"])
@@ -67,6 +77,7 @@ class CRUDGenerator:
                 item=item,
                 model_name=model_name.capitalize(),
                 edit_url=edit_url,
+nav_links=get_nav_links(blueprint_name),
             )
 
         @blueprint.route("/create/", methods=["GET", "POST"])
@@ -88,6 +99,7 @@ class CRUDGenerator:
                     form=form,
                     model_name=model_name.capitalize(),
                     action="Create",
+                   nav_links=get_nav_links(blueprint_name),
                 )
 
             else:
@@ -105,9 +117,15 @@ class CRUDGenerator:
                     except Exception as e:
                         self.db.session.rollback()
                         return render_template(
-                            "create.html", columns=model.__table__.columns
+                            "create.html",
+                            columns=model.__table__.columns,
+                        nav_links=get_nav_links(blueprint_name),
                         )
-                return render_template("create.html", columns=model.__table__.columns)
+                return render_template(
+                    "create.html",
+                    columns=model.__table__.columns,
+           nav_links=get_nav_links(blueprint_name),
+                )
 
         @blueprint.route("/edit/<int:item_id>", methods=["GET", "POST"])
         def edit_item_web(item_id):
@@ -130,6 +148,7 @@ class CRUDGenerator:
                     form=form,
                     model_name=model_name.capitalize(),
                     action="Edit",
+              nav_links=get_nav_links(blueprint_name),
                 )
             else:
 
@@ -145,7 +164,10 @@ class CRUDGenerator:
                     except Exception as e:
                         self.db.session.rollback()
                 return render_template(
-                    "edit.html", columns=model.__table__.columns, item=item
+                    "edit.html",
+                    columns=model.__table__.columns,
+                    item=item,
+                  nav_links=get_nav_links(blueprint_name),
                 )
 
         self.app.register_blueprint(blueprint, url_prefix=f"/{blueprint_name}")
@@ -209,3 +231,7 @@ class CRUDGenerator:
 
             if os.path.isfile(source_file):
                 shutil.copy(source_file, destination_file)
+
+
+
+    

@@ -1,29 +1,25 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>{{ model_name }} List</title>
-  </head>
-  <body>
-    <h1>{{ model_name }} List</h1>
-    <table style="border:1px solid black">
-      <tr>
-        {% for key in keys %}
-          <th style="border:1px solid black">{{ key.capitalize() }}</th>
-        {% endfor %}
-      </tr>
-      {% for item in items %}
-        <tr>
-          {% for key, value in item.to_dict().items() %}
-            {% if key in keys %}
-              {% if list_config['details_property_on'] == key %}
-              <td style="border:1px solid black"><a href="{{url_for(details_url, item_id=item.to_dict()[list_config['unique_identifier']] )}}">{{value}}</a></td>
-              {% else %}
-                <td style="border:1px solid black">{{ value }}</td>
-              {% endif %}
-            {% endif %}
-          {% endfor %}
-        </tr>
+{% extends 'base.html' %} {% block title %}
+  {{model_name}} List
+{% endblock %} {% block content %}
+<h1>{{ model_name }} List</h1>
+<table style="border:1px solid black">
+  <tr>
+    {% for key in keys %}
+      <th style="border:1px solid black">{{ key.capitalize() }}</th>
+    {% endfor %}
+  </tr>
+  {% for item in items %}
+    <tr>
+      {% for key, value in item.to_dict().items() %}
+        {% if key in keys %}
+          {% if list_config['details_property_on'] == key %}
+          <td style="border:1px solid black"><a href="{{url_for(details_url, item_id=item.to_dict()[list_config['unique_identifier']] )}}">{{value}}</a></td>
+          {% else %}
+            <td style="border:1px solid black">{{ value }}</td>
+          {% endif %}
+        {% endif %}
       {% endfor %}
-    </table>
-  </body>
-</html>
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}

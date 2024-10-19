@@ -1,9 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create {{ model_name }} </title>
-</head>
-<body>
+{% extends 'base.html' %} {% block title %}
+  {{model_name}} List
+{% endblock %} {% block content %}
     <h1>Create {{ model_name }}</h1>
     <form method="POST">
         {% for column in columns %}
@@ -19,5 +16,4 @@
         {% endfor %}
         <button type="submit">Create {{ model_name }}</button>
     </form>
-</body>
-</html>
+{% endblock %}
