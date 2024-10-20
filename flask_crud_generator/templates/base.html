@@ -7,11 +7,17 @@
   <body>
     <nav>
       {% if with_navigation %}
-        {% for nav in nav_links %}
-          <a href=" {{ url_for(nav.url) }}">{{ nav.name }}</a>
+        {% for item in urls %}
+          {% for key, value in item.items() %}
+            {% if key != 'in_nav' and key != 'name' and item.in_nav %}
+              <li>
+                <a href="{{ url_for(value) }}">{{ item.name }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
         {% endfor %}
       {% endif %}
-      </nav>
+    </nav>
     {% block content %}
 
     {% endblock %}

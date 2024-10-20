@@ -1,5 +1,6 @@
 /templates
 app.py
+test_app.py
 
 __pycache__
 .pytest_cache
