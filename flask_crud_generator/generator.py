@@ -25,6 +25,7 @@ class CRUDGenerator:
         form_class=None,
         create_edit_form=None,
         list_config=None,
+        with_navigation=False,
     ):
         self.copy_templates_to_app()
         model_name = model.__name__.lower()
@@ -69,6 +70,7 @@ class CRUDGenerator:
                 nav_links=get_nav_links(blueprint_name),
                 delete_url=delete_url,
                 edit_url=edit_url,
+                with_navigation=with_navigation,
             )
 
         @blueprint.route("/<int:item_id>", methods=["GET"])
@@ -83,7 +85,8 @@ class CRUDGenerator:
                 model_name=model_name.capitalize(),
                 edit_url=edit_url,
                 nav_links=get_nav_links(blueprint_name),
-                delete_url=delete_url
+                delete_url=delete_url,
+                with_navigation=with_navigation,
             )
 
         @blueprint.route("/create/", methods=["GET", "POST"])
@@ -106,6 +109,7 @@ class CRUDGenerator:
                     model_name=model_name.capitalize(),
                     action="Create",
                     nav_links=get_nav_links(blueprint_name),
+                    with_navigation=with_navigation,
                 )
 
             else:
@@ -126,11 +130,13 @@ class CRUDGenerator:
                             "create.html",
                             columns=model.__table__.columns,
                             nav_links=get_nav_links(blueprint_name),
+                            with_navigation=with_navigation,
                         )
                 return render_template(
                     "create.html",
                     columns=model.__table__.columns,
                     nav_links=get_nav_links(blueprint_name),
+                    with_navigation=with_navigation,
                 )
 
         @blueprint.route("/edit/<int:item_id>", methods=["GET", "POST"])
@@ -155,6 +161,7 @@ class CRUDGenerator:
                     model_name=model_name.capitalize(),
                     action="Edit",
                     nav_links=get_nav_links(blueprint_name),
+                    with_navigation=with_navigation,
                 )
             else:
 
@@ -174,6 +181,7 @@ class CRUDGenerator:
                     columns=model.__table__.columns,
                     item=item,
                     nav_links=get_nav_links(blueprint_name),
+                    with_navigation=with_navigation,
                 )
 
         @blueprint.route("/<int:item_id>/delete", methods=["GET"])

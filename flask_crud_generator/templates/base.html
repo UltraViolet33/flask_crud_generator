@@ -6,10 +6,12 @@
   </head>
   <body>
     <nav>
-      {% for nav in nav_links %}
-        <a href=" {{ url_for(nav.url) }}">{{ nav.name }}</a>
-      {% endfor %}
-    </nav>
+      {% if with_navigation %}
+        {% for nav in nav_links %}
+          <a href=" {{ url_for(nav.url) }}">{{ nav.name }}</a>
+        {% endfor %}
+      {% endif %}
+      </nav>
     {% block content %}
 
     {% endblock %}
