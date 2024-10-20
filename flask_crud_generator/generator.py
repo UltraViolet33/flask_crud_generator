@@ -46,17 +46,18 @@ class CRUDGenerator:
         if blueprint is None:
             blueprint = Blueprint(model_name, __name__)
 
-
         def get_nav_links(blueprint_name):
             return [
-                {"name":"List", "url": f"{blueprint_name}.list_items_web"},
-                {"name":"Create", "url": f"{blueprint_name}.create_item_web"},
+                {"name": "List", "url": f"{blueprint_name}.list_items_web"},
+                {"name": "Create", "url": f"{blueprint_name}.create_item_web"},
             ]
 
         @blueprint.route("/", methods=["GET"])
         def list_items_web():
             items = model.query.all()
             details_url = f"{blueprint_name}.get_item_web"
+            delete_url = f"{blueprint_name}.delete_item_web"
+            edit_url = f"{blueprint_name}.edit_item_web"
 
             return render_template(
                 "list.html",
@@ -66,18 +67,23 @@ class CRUDGenerator:
                 model_name=model_name.capitalize(),
                 details_url=details_url,
                 nav_links=get_nav_links(blueprint_name),
+                delete_url=delete_url,
+                edit_url=edit_url,
             )
 
         @blueprint.route("/<int:item_id>", methods=["GET"])
         def get_item_web(item_id):
             item = model.query.get_or_404(item_id)
             edit_url = f"{blueprint_name}.edit_item_web"
+            delete_url = f"{blueprint_name}.delete_item_web"
+
             return render_template(
                 "details.html",
                 item=item,
                 model_name=model_name.capitalize(),
                 edit_url=edit_url,
-nav_links=get_nav_links(blueprint_name),
+                nav_links=get_nav_links(blueprint_name),
+                delete_url=delete_url
             )
 
         @blueprint.route("/create/", methods=["GET", "POST"])
@@ -99,7 +105,7 @@ nav_links=get_nav_links(blueprint_name),
                     form=form,
                     model_name=model_name.capitalize(),
                     action="Create",
-                   nav_links=get_nav_links(blueprint_name),
+                    nav_links=get_nav_links(blueprint_name),
                 )
 
             else:
@@ -119,12 +125,12 @@ nav_links=get_nav_links(blueprint_name),
                         return render_template(
                             "create.html",
                             columns=model.__table__.columns,
-                        nav_links=get_nav_links(blueprint_name),
+                            nav_links=get_nav_links(blueprint_name),
                         )
                 return render_template(
                     "create.html",
                     columns=model.__table__.columns,
-           nav_links=get_nav_links(blueprint_name),
+                    nav_links=get_nav_links(blueprint_name),
                 )
 
         @blueprint.route("/edit/<int:item_id>", methods=["GET", "POST"])
@@ -148,7 +154,7 @@ nav_links=get_nav_links(blueprint_name),
                     form=form,
                     model_name=model_name.capitalize(),
                     action="Edit",
-              nav_links=get_nav_links(blueprint_name),
+                    nav_links=get_nav_links(blueprint_name),
                 )
             else:
 
@@ -167,8 +173,15 @@ nav_links=get_nav_links(blueprint_name),
                     "edit.html",
                     columns=model.__table__.columns,
                     item=item,
-                  nav_links=get_nav_links(blueprint_name),
+                    nav_links=get_nav_links(blueprint_name),
                 )
+
+        @blueprint.route("/<int:item_id>/delete", methods=["GET"])
+        def delete_item_web(item_id):
+            item = model.query.get_or_404(item_id)
+            self.db.session.delete(item)
+            self.db.session.commit()
+            return redirect(url_for(f"{blueprint_name}.list_items_web"))
 
         self.app.register_blueprint(blueprint, url_prefix=f"/{blueprint_name}")
 
@@ -231,7 +244,3 @@ nav_links=get_nav_links(blueprint_name),
 
             if os.path.isfile(source_file):
                 shutil.copy(source_file, destination_file)
-
-
-
-    

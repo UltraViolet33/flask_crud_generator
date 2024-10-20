@@ -7,6 +7,8 @@
     {% for key in keys %}
       <th style="border:1px solid black">{{ key.capitalize() }}</th>
     {% endfor %}
+    <th style="border:1px solid black">Edit</th>
+    <th style="border:1px solid black">Delete</th>
   </tr>
   {% for item in items %}
     <tr>
@@ -19,6 +21,8 @@
           {% endif %}
         {% endif %}
       {% endfor %}
+      <td style="border:1px solid black"><a href="{{ url_for(edit_url, item_id=item.to_dict()[list_config['unique_identifier']] ) }}">Edit</a></td>
+      <td style="border:1px solid black"><a href="{{ url_for(delete_url, item_id=item.to_dict()[list_config['unique_identifier']] ) }}">Delete</a></td>
     </tr>
   {% endfor %}
 </table>
